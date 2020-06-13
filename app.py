@@ -9,11 +9,12 @@ app = Flask(__name__)
 @app.route('/pca', methods=['POST'])
 def pca_request():
     
-    two_first_components_plot, components_and_features_plot, explained_variance_ratio = pca(request.files.get("csv"))
+    two_first_components_plot, components_and_features_plot, wcss_plot, explained_variance_ratio = pca(request.files.get("csv"))
     
     return jsonify(
         twoFirstComponentsPlot = two_first_components_plot,
         componentsAndFeaturesPlot = components_and_features_plot, 
+        wcssPlot = wcss_plot,
         explainedVarianceRatio = explained_variance_ratio
     )
 

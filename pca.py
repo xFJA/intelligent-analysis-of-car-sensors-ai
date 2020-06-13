@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
 import random
 import base64
 import io
@@ -42,7 +43,7 @@ def pca(csv_file):
 
     # Read file
     df = pd.read_csv(csv_file)
-  
+
     # Get features from the first row
     features = df.columns.values
 
@@ -58,13 +59,36 @@ def pca(csv_file):
     # Create the principal components
     principal_components = pca.fit_transform(x)
 
-    # TODO: Add chart to Dataset entity 
+    # Get PCA scores
+    pca_scores = pca.transform(x)
+
+    # TODO: Add chart to Dataset entity
     # Number of components we should choose
     # pca = PCA().fit(x)
     # plt.plot(np.cumsum(pca.explained_variance_ratio_))
     # plt.xlabel('number of components')
     # plt.ylabel('cumulative explained variance')
     #plt.savefig("cumulative_explained_variance.png", bbox_inches='tight')
+
+    # Fit k means using the data from PCA
+    wcss = []
+    for i in range(1, 21):
+        kmeans_pca = KMeans(n_clusters=i, init='k-means++', random_state=42)
+        kmeans_pca.fit(pca_scores)
+        wcss.append(kmeans_pca.inertia_)
+
+    # Plot wcss
+    plt.figure(figsize=(10, 10))
+    plt.plot(range(1, 21), wcss, marker='o', linestyle='--')
+    plt.xlabel("Clusters number")
+    plt.ylabel("WCSS")
+    # plt.savefig('wcss.png')
+
+    # Create Base 64 string of the plot
+    pic_IObytes = io.BytesIO()
+    plt.savefig(pic_IObytes,  format='png')
+    pic_IObytes.seek(0)
+    wcss_plot = base64.b64encode(pic_IObytes.read())
 
     # Create columns labels for each component
     pc_colums_names = generate_pc_columns_names(NUMBER_COMPONENTS)
@@ -79,20 +103,20 @@ def pca(csv_file):
     df_complete.rename(columns={0: 'cluster'}, inplace=True)
 
     # Plot two first compontens
-    fig = plt.figure(figsize=(8, 8))
+    fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(1, 1, 1)
     ax.set_xlabel('Principal component 1', fontsize=16)
     ax.set_ylabel('Principal component 2', fontsize=16)
     ax.set_title('PCA', fontsize=22)
     targets = CLUSTER_TYPES
-    colors = ['r', 'g', 'b']
+    colors = ['#64b5f6', '#1e88e5', '#0d47a1']
     for target, color in zip(targets, colors):
         indicesToKeep = df_complete['cluster'] == target
         ax.scatter(df_complete.loc[indicesToKeep, 'pc1'],
                    df_complete.loc[indicesToKeep, 'pc2'], c=color, s=50)
     ax.legend(targets)
     ax.grid()
-    #plt.savefig("two_first_componets_plot.png")
+    # plt.savefig("two_first_componets_plot.png")
 
     # Create Base 64 string of the plot
     pic_IObytes = io.BytesIO()
@@ -104,7 +128,7 @@ def pca(csv_file):
     explained_variance_ratio = pca.explained_variance_ratio_
 
     # Create a plot for the porcetage of participation of each feature in each component
-    plt.matshow(pca.components_, cmap='magma')
+    plt.matshow(pca.components_, cmap='Blues')
     plt.yticks([0, 1, 2], pc_colums_names, fontsize=10)
     plt.colorbar()
     plt.xticks(range(len(features)), features, rotation=90, ha='right')
@@ -116,6 +140,4 @@ def pca(csv_file):
     pic_IObytes.seek(0)
     components_and_features_plot = base64.b64encode(pic_IObytes.read())
 
-
-
-    return two_first_components_plot.decode('ascii'), components_and_features_plot.decode('ascii'), pd.Series(explained_variance_ratio).to_json(orient='values')
+    return two_first_components_plot.decode('ascii'), components_and_features_plot.decode('ascii'), wcss_plot.decode('ascii'), pd.Series(explained_variance_ratio).to_json(orient='values')
