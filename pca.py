@@ -53,6 +53,21 @@ def pca(csv_file):
     # Standardizing (mean = 0 , variance = 1)
     x = StandardScaler().fit_transform(x)
 
+    # Cumulative explanined variance ratio plot
+    pca = PCA().fit(x)
+    plt.plot(np.cumsum(pca.explained_variance_ratio_))
+    plt.xlabel('Components number')
+    plt.ylabel('Cumulative explained variance')
+    #plt.savefig("cumulative_explained_variance.png", bbox_inches='tight')
+
+    # Create Base 64 string of the plot
+    pic_IObytes = io.BytesIO()
+    plt.savefig(pic_IObytes,  format='png')
+    pic_IObytes.seek(0)
+    cumulative_explained_variance_ratio_plot = base64.b64encode(
+        pic_IObytes.read())
+    plt.clf()
+
     # Create pca
     pca = PCA(n_components=NUMBER_COMPONENTS)
 
@@ -61,14 +76,6 @@ def pca(csv_file):
 
     # Get PCA scores
     pca_scores = pca.transform(x)
-
-    # TODO: Add chart to Dataset entity
-    # Number of components we should choose
-    # pca = PCA().fit(x)
-    # plt.plot(np.cumsum(pca.explained_variance_ratio_))
-    # plt.xlabel('number of components')
-    # plt.ylabel('cumulative explained variance')
-    #plt.savefig("cumulative_explained_variance.png", bbox_inches='tight')
 
     # Fit k means using the data from PCA
     wcss = []
@@ -139,5 +146,6 @@ def pca(csv_file):
     plt.savefig(pic_IObytes,  format='png', bbox_inches='tight')
     pic_IObytes.seek(0)
     components_and_features_plot = base64.b64encode(pic_IObytes.read())
+    plt.clf()
 
-    return two_first_components_plot.decode('ascii'), components_and_features_plot.decode('ascii'), wcss_plot.decode('ascii'), pd.Series(explained_variance_ratio).to_json(orient='values')
+    return two_first_components_plot.decode('ascii'), components_and_features_plot.decode('ascii'),  wcss_plot.decode('ascii'), cumulative_explained_variance_ratio_plot.decode('ascii'), pd.Series(explained_variance_ratio).to_json(orient='values')
