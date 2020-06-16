@@ -8,27 +8,7 @@ import random
 import base64
 import io
 
-# TODO: find a new way to group the dataset
-CLUSTER_TYPES = ["Road", "Highway", "Dirty road"]
 NUMBER_COMPONENTS = 3
-
-
-def get_cluster_column(cont):
-    res = []
-
-    cluster_size = len(CLUSTER_TYPES)
-
-    i = 0
-
-    while i < cont:
-        cluster = CLUSTER_TYPES[random.randint(0, cluster_size) - 1]
-        times = random.randint(80, 269)
-
-        res += [cluster] * times
-        i += times
-
-    return res
-
 
 def generate_pc_columns_names(number):
     res = []
@@ -50,7 +30,7 @@ def pca(csv_file):
     # Remove features
     x = df.loc[:, features].values
 
-    # Standardizing (mean = 0 , variance = 1)
+    # Standardizing data (mean = 0 , variance = 1)
     x = StandardScaler().fit_transform(x)
 
     # Cumulative explanined variance ratio plot
@@ -71,13 +51,13 @@ def pca(csv_file):
     # Create pca
     pca = PCA(n_components=NUMBER_COMPONENTS)
 
-    # Create the principal components
-    principal_components = pca.fit_transform(x)
+    # Fit model with the number of components selected
+    pca.fit_transform(x)
 
-    # Get PCA scores
+    # Get PCA scores (create clusters based on the components scores)
     pca_scores = pca.transform(x)
 
-    # Fit k means using the data from PCA
+    # Fit kmeans using the data from PCA
     wcss = []
     for i in range(1, 21):
         kmeans_pca = KMeans(n_clusters=i, init='k-means++', random_state=42)
@@ -97,17 +77,26 @@ def pca(csv_file):
     pic_IObytes.seek(0)
     wcss_plot = base64.b64encode(pic_IObytes.read())
 
+    # TODO: Get cluster nubmer from request
+    # Run k-means with the number of cluster chosen
+    kmeans_pca = KMeans(n_clusters=5, init='k-means++', random_state=42)
+
+    # Fit data with the k-means pca model
+    kmeans_pca.fit(pca_scores)
+
+    # Create dataset with results from PCA and the cluster column
+    df_kmeans_pca = pd.concat(
+        [df.reset_index(drop=True), pd.DataFrame(pca_scores)], axis=1)
+    df_kmeans_pca.columns.values[-3:] = generate_pc_columns_names(
+        NUMBER_COMPONENTS)
+    df_kmeans_pca['Kmeans value'] = kmeans_pca.labels_
+
+    # Add cluster column with a label associated to each kmeans value
+    df_kmeans_pca['Cluster'] = df_kmeans_pca['Kmeans value'].map(
+        {0: 'Type 1', 1: 'Type 2', 2: 'Type 3', 3: 'Type 4', 4: 'Type 5'})
+
     # Create columns labels for each component
     pc_colums_names = generate_pc_columns_names(NUMBER_COMPONENTS)
-
-    principal_components_df = pd.DataFrame(
-        data=principal_components, columns=pc_colums_names)
-
-    # Add the cluster column
-    cluster_column = get_cluster_column(len(df.index)-1)
-    df_complete = pd.concat(
-        [principal_components_df, pd.Series(cluster_column)], axis=1)
-    df_complete.rename(columns={0: 'cluster'}, inplace=True)
 
     # Plot two first compontens
     fig = plt.figure(figsize=(10, 10))
@@ -115,12 +104,12 @@ def pca(csv_file):
     ax.set_xlabel('Principal component 1', fontsize=16)
     ax.set_ylabel('Principal component 2', fontsize=16)
     ax.set_title('PCA', fontsize=22)
-    targets = CLUSTER_TYPES
-    colors = ['#64b5f6', '#1e88e5', '#0d47a1']
+    targets = ['Type 1', 'Type 2', 'Type 3', 'Type 4', 'Type 5']
+    colors = ['#64b5f6', '#1e88e5', '#0d47a1', '#1a237e', '#3949ab']
     for target, color in zip(targets, colors):
-        indicesToKeep = df_complete['cluster'] == target
-        ax.scatter(df_complete.loc[indicesToKeep, 'pc1'],
-                   df_complete.loc[indicesToKeep, 'pc2'], c=color, s=50)
+        indicesToKeep = df_kmeans_pca['Cluster'] == target
+        ax.scatter(df_kmeans_pca.loc[indicesToKeep, 'pc1'],
+                   df_kmeans_pca.loc[indicesToKeep, 'pc2'], c=color, s=50)
     ax.legend(targets)
     ax.grid()
     # plt.savefig("two_first_componets_plot.png")
