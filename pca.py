@@ -7,8 +7,10 @@ from sklearn.cluster import KMeans
 import random
 import base64
 import io
+import json
 
 NUMBER_COMPONENTS = 3
+
 
 def generate_pc_columns_names(number):
     res = []
@@ -38,7 +40,7 @@ def pca(csv_file):
     plt.plot(np.cumsum(pca.explained_variance_ratio_))
     plt.xlabel('Components number')
     plt.ylabel('Cumulative explained variance')
-    #plt.savefig("cumulative_explained_variance.png", bbox_inches='tight')
+    # plt.savefig("cumulative_explained_variance.png", bbox_inches='tight')
 
     # Create Base 64 string of the plot
     pic_IObytes = io.BytesIO()
@@ -56,6 +58,18 @@ def pca(csv_file):
 
     # Get PCA scores (create clusters based on the components scores)
     pca_scores = pca.transform(x)
+
+    # TODO: Discuss about adding all components
+    # Get the principal features for the two first principal components
+    principal_components_more_important_features = ""
+    for row in pca.components_:
+        i = 0
+        for value in row:
+            if value >= 0.90:
+                principal_components_more_important_features += (
+                    features[i]+",")
+                i += 1
+        principal_components_more_important_features += ";"
 
     # Fit kmeans using the data from PCA
     wcss = []
@@ -128,7 +142,7 @@ def pca(csv_file):
     plt.yticks([0, 1, 2], pc_colums_names, fontsize=10)
     plt.colorbar()
     plt.xticks(range(len(features)), features, rotation=90, ha='right')
-    #plt.savefig("pca_and_features_participation.png", bbox_inches='tight')
+    # plt.savefig("pca_and_features_participation.png", bbox_inches='tight')
 
     # Create Base 64 string of the plot
     pic_IObytes = io.BytesIO()
@@ -137,4 +151,7 @@ def pca(csv_file):
     components_and_features_plot = base64.b64encode(pic_IObytes.read())
     plt.clf()
 
-    return two_first_components_plot.decode('ascii'), components_and_features_plot.decode('ascii'),  wcss_plot.decode('ascii'), cumulative_explained_variance_ratio_plot.decode('ascii'), pd.Series(explained_variance_ratio).to_json(orient='values')
+    return (two_first_components_plot.decode('ascii'), components_and_features_plot.decode('ascii'),
+            wcss_plot.decode('ascii'), cumulative_explained_variance_ratio_plot.decode(
+                'ascii'), pd.Series(explained_variance_ratio).to_json(orient='values'),
+            pd.Series(kmeans_pca.labels_).to_json(orient='values'))
