@@ -9,7 +9,6 @@ import base64
 import io
 import json
 
-NUMBER_COMPONENTS = 3
 COLOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y']
 
 
@@ -17,12 +16,32 @@ def generate_pc_columns_names(number):
     res = []
 
     for i in range(number):
-        res.append("pc"+str(i))
+        res.append("pc"+str(i+1))
 
     return res
 
 
-def pca(csv_file):
+def generate_cluster_labels(number):
+    res = []
+
+    for i in range(number):
+        res.append("Type "+str(i))
+
+    return res
+
+
+def generate_cluster_map(number):
+    res = {}
+
+    cluster_labels = generate_cluster_labels(number)
+
+    for i in range(number):
+        res[i] = cluster_labels[i]
+
+    return res
+
+
+def pca(csv_file, components_number, clusters_number):
 
     # Read file
     df = pd.read_csv(csv_file)
@@ -52,7 +71,7 @@ def pca(csv_file):
     plt.clf()
 
     # Create pca
-    pca = PCA(n_components=NUMBER_COMPONENTS)
+    pca = PCA(n_components=components_number)
 
     # Fit model with the number of components selected
     pca.fit_transform(x)
@@ -92,9 +111,9 @@ def pca(csv_file):
     pic_IObytes.seek(0)
     wcss_plot = base64.b64encode(pic_IObytes.read())
 
-    # TODO: Get cluster nubmer from request
     # Run k-means with the number of cluster chosen
-    kmeans_pca = KMeans(n_clusters=5, init='k-means++', random_state=42)
+    kmeans_pca = KMeans(n_clusters=clusters_number,
+                        init='k-means++', random_state=42)
 
     # Fit data with the k-means pca model
     kmeans_pca.fit(pca_scores)
@@ -102,16 +121,16 @@ def pca(csv_file):
     # Create dataset with results from PCA and the cluster column
     df_kmeans_pca = pd.concat(
         [df.reset_index(drop=True), pd.DataFrame(pca_scores)], axis=1)
-    df_kmeans_pca.columns.values[-3:] = generate_pc_columns_names(
-        NUMBER_COMPONENTS)
+    df_kmeans_pca.columns.values[-components_number:] = generate_pc_columns_names(
+        components_number)
     df_kmeans_pca['Kmeans value'] = kmeans_pca.labels_
 
     # Add cluster column with a label associated to each kmeans value
     df_kmeans_pca['Cluster'] = df_kmeans_pca['Kmeans value'].map(
-        {0: 'Type 1', 1: 'Type 2', 2: 'Type 3', 3: 'Type 4', 4: 'Type 5'})
+        generate_cluster_map(clusters_number))
 
     # Create columns labels for each component
-    pc_colums_names = generate_pc_columns_names(NUMBER_COMPONENTS)
+    pc_colums_names = generate_pc_columns_names(components_number)
 
     # Plot two first compontens
     fig = plt.figure(figsize=(10, 10))
@@ -119,7 +138,7 @@ def pca(csv_file):
     ax.set_xlabel('Principal component 1', fontsize=16)
     ax.set_ylabel('Principal component 2', fontsize=16)
     ax.set_title('PCA', fontsize=22)
-    targets = ['Type 1', 'Type 2', 'Type 3', 'Type 4', 'Type 5']
+    targets = generate_cluster_labels(clusters_number)
     colors = COLOR_LIST
     for target, color in zip(targets, colors):
         indicesToKeep = df_kmeans_pca['Cluster'] == target

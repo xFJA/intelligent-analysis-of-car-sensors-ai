@@ -12,7 +12,7 @@ app = Flask(__name__)
 def pca_request():
 
     two_first_components_plot, components_and_features_plot, wcss_plot, cumulative_explained_variance_ratio_plot,  explained_variance_ratio, cluster_list = pca(
-        request.files.get("csv"))
+        request.files.get("csv"), int(request.args.get('components-number')), int(request.args.get('clusters-number')))
 
     return jsonify(
         twoFirstComponentsPlot=two_first_components_plot,
