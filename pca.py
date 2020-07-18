@@ -10,6 +10,7 @@ import io
 import json
 
 NUMBER_COMPONENTS = 3
+COLOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y']
 
 
 def generate_pc_columns_names(number):
@@ -119,7 +120,7 @@ def pca(csv_file):
     ax.set_ylabel('Principal component 2', fontsize=16)
     ax.set_title('PCA', fontsize=22)
     targets = ['Type 1', 'Type 2', 'Type 3', 'Type 4', 'Type 5']
-    colors = ['#64b5f6', '#1e88e5', '#0d47a1', '#1a237e', '#3949ab']
+    colors = COLOR_LIST
     for target, color in zip(targets, colors):
         indicesToKeep = df_kmeans_pca['Cluster'] == target
         ax.scatter(df_kmeans_pca.loc[indicesToKeep, 'pc1'],
