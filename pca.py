@@ -8,6 +8,7 @@ import random
 import base64
 import io
 import json
+import operator
 
 COLOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y']
 
@@ -40,6 +41,47 @@ def generate_cluster_map(number):
 
     return res
 
+def get_pca_more_important_features(df, features, pca, components_number):
+    # Get identity matrix
+    i = np.identity(df.shape[1])
+
+    # Pass identity matrix to transform method to get weights (coeficients)
+    coef = pca.transform(i)
+
+    more_important_features = {}
+
+    for j in range(components_number):
+        pca_coef = {}
+        cont = 0
+        for pc in coef:
+            pca_coef[features[cont]] = abs(pc[j])
+            cont += 1
+
+        # Calculate the percetange of each coeficient (percentage(i) = (lamba(i) * 100) / sum(lambas))
+        percetage_sum = sum(pca_coef.values())
+        pca_coef_percetage = {}
+        for key in pca_coef:
+            pca_coef_percetage[key] = (pca_coef[key] * 100) / percetage_sum
+
+        # Order each feature coeficient percentage by it value
+        pca_coef_percetage = sorted(pca_coef_percetage.items(),
+                                     key=operator.itemgetter(1), reverse=True)
+
+        # Get most important features to cover the 90% of participation
+        percentage_participation = 0
+        pca_most_important_features = {}
+
+        for per in pca_coef_percetage:
+            if (percentage_participation >= 90):
+                break
+
+            value = per[1]
+            pca_most_important_features[per[0]] = value
+            percentage_participation += value
+        
+        more_important_features[j] = pca_most_important_features
+    
+    return more_important_features
 
 def pca(csv_file, components_number, clusters_number):
 
@@ -79,17 +121,9 @@ def pca(csv_file, components_number, clusters_number):
     # Get PCA scores (create clusters based on the components scores)
     pca_scores = pca.transform(x)
 
-    # TODO: Discuss about adding all components
-    # Get the principal features for the two first principal components
-    principal_components_more_important_features = ""
-    for row in pca.components_:
-        i = 0
-        for value in row:
-            if value >= 0.90:
-                principal_components_more_important_features += (
-                    features[i]+",")
-                i += 1
-        principal_components_more_important_features += ";"
+ 
+    # Get the principal features for each principal component
+    more_important_features = get_pca_more_important_features(df, features, pca, components_number) 
 
     # Fit kmeans using the data from PCA
     wcss = []
@@ -174,4 +208,4 @@ def pca(csv_file, components_number, clusters_number):
     return (two_first_components_plot.decode('ascii'), components_and_features_plot.decode('ascii'),
             wcss_plot.decode('ascii'), cumulative_explained_variance_ratio_plot.decode(
                 'ascii'), pd.Series(explained_variance_ratio).to_json(orient='values'),
-            pd.Series(kmeans_pca.labels_).to_json(orient='values'))
+            pd.Series(kmeans_pca.labels_).to_json(orient='values'), more_important_features)

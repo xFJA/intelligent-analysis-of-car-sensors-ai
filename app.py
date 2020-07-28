@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from pca import pca
 from io import StringIO
 import os
+import json
 
 app = Flask(__name__)
 
@@ -11,7 +12,7 @@ app = Flask(__name__)
 @app.route('/pca', methods=['POST'])
 def pca_request():
 
-    two_first_components_plot, components_and_features_plot, wcss_plot, cumulative_explained_variance_ratio_plot,  explained_variance_ratio, cluster_list = pca(
+    two_first_components_plot, components_and_features_plot, wcss_plot, cumulative_explained_variance_ratio_plot,  explained_variance_ratio, cluster_list, more_important_features = pca(
         request.files.get("csv"), int(request.args.get('components-number')), int(request.args.get('clusters-number')))
 
     return jsonify(
@@ -20,7 +21,8 @@ def pca_request():
         wcssPlot=wcss_plot,
         cumulativeExplainedVarianceRatioPlot=cumulative_explained_variance_ratio_plot,
         explainedVarianceRatio=explained_variance_ratio,
-        clusterList=cluster_list
+        clusterList=cluster_list,
+        moreImportantFeatures=json.dumps(more_important_features)
     )
 
 
