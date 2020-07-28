@@ -9,6 +9,7 @@ import base64
 import io
 import json
 import operator
+from kneed import KneeLocator
 
 COLOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y']
 
@@ -41,6 +42,7 @@ def generate_cluster_map(number):
 
     return res
 
+
 def get_pca_more_important_features(df, features, pca, components_number):
     # Get identity matrix
     i = np.identity(df.shape[1])
@@ -65,7 +67,7 @@ def get_pca_more_important_features(df, features, pca, components_number):
 
         # Order each feature coeficient percentage by it value
         pca_coef_percetage = sorted(pca_coef_percetage.items(),
-                                     key=operator.itemgetter(1), reverse=True)
+                                    key=operator.itemgetter(1), reverse=True)
 
         # Get most important features to cover the 90% of participation
         percentage_participation = 0
@@ -78,10 +80,11 @@ def get_pca_more_important_features(df, features, pca, components_number):
             value = per[1]
             pca_most_important_features[per[0]] = value
             percentage_participation += value
-        
+
         more_important_features[j] = pca_most_important_features
-    
+
     return more_important_features
+
 
 def pca(csv_file, components_number, clusters_number):
 
@@ -121,9 +124,9 @@ def pca(csv_file, components_number, clusters_number):
     # Get PCA scores (create clusters based on the components scores)
     pca_scores = pca.transform(x)
 
- 
     # Get the principal features for each principal component
-    more_important_features = get_pca_more_important_features(df, features, pca, components_number) 
+    more_important_features = get_pca_more_important_features(
+        df, features, pca, components_number)
 
     # Fit kmeans using the data from PCA
     wcss = []
@@ -131,10 +134,17 @@ def pca(csv_file, components_number, clusters_number):
         kmeans_pca = KMeans(n_clusters=i, init='k-means++', random_state=42)
         kmeans_pca.fit(pca_scores)
         wcss.append(kmeans_pca.inertia_)
+    
+
+    # Find elbow
+    kneedle = KneeLocator(range(1, 21), wcss, S=1.0,
+                          curve='convex', direction='decreasing')
 
     # Plot wcss
     plt.figure(figsize=(10, 10))
     plt.plot(range(1, 21), wcss, marker='o', linestyle='--')
+    plt.vlines(kneedle.knee, plt.ylim()[0], plt.ylim()[1], linestyles='dashed', colors='m', label='Elbow')
+    plt.legend()
     plt.xlabel("Clusters number")
     plt.ylabel("WCSS")
     # plt.savefig('wcss.png')
