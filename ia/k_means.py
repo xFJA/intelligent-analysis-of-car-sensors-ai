@@ -10,7 +10,8 @@ import io
 import json
 import operator
 from kneed import KneeLocator
-from media import image
+# pylint: disable=relative-beyond-top-level
+from .common import generate_cluster_labels, get_base64, COLOR_LIST
 
 COLOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y']
 
@@ -20,15 +21,6 @@ def generate_pc_columns_names(number):
 
     for i in range(number):
         res.append("pc"+str(i+1))
-
-    return res
-
-
-def generate_cluster_labels(number):
-    res = []
-
-    for i in range(number):
-        res.append("Type "+str(i))
 
     return res
 
@@ -105,14 +97,14 @@ def start(csv_file, components_number, clusters_number):
     plt.plot(np.cumsum(pca.explained_variance_ratio_))
     plt.xlabel('Components number')
     plt.ylabel('Cumulative explained variance')
-    cumulative_explained_variance_ratio_plot = image.get_base64(plt)
+    cumulative_explained_variance_ratio_plot = get_base64(plt)
     plt.clf()
 
     # Create pca
     pca = PCA(n_components=components_number)
 
     # Fit model with the number of components selected
-    pca.fit_transform(x)
+    x_scaled_reduced = pca.fit_transform(x)
 
     # Get PCA scores (create clusters based on the components scores)
     pca_scores = pca.transform(x)
@@ -124,10 +116,10 @@ def start(csv_file, components_number, clusters_number):
     # Fit kmeans using the data from PCA
     wcss = []
     for i in range(1, 21):
-        kmeans_pca = KMeans(n_clusters=i, init='k-means++', random_state=42)
+        kmeans_pca = KMeans(n_clusters=i, init='k-means++',
+                            random_state=42)
         kmeans_pca.fit(pca_scores)
         wcss.append(kmeans_pca.inertia_)
-    
 
     # Find elbow
     kneedle = KneeLocator(range(1, 21), wcss, S=1.0,
@@ -136,11 +128,12 @@ def start(csv_file, components_number, clusters_number):
     # Plot wcss
     plt.figure(figsize=(10, 10))
     plt.plot(range(1, 21), wcss, marker='o', linestyle='--')
-    plt.vlines(kneedle.knee, plt.ylim()[0], plt.ylim()[1], linestyles='dashed', colors='m', label='Elbow')
+    plt.vlines(kneedle.knee, plt.ylim()[0], plt.ylim()[
+               1], linestyles='dashed', colors='m', label='Elbow')
     plt.legend()
     plt.xlabel("Clusters number")
     plt.ylabel("WCSS")
-    wcss_plot = image.get_base64(plt)
+    wcss_plot = get_base64(plt)
     plt.clf()
 
     # Run k-means with the number of cluster chosen
@@ -178,7 +171,7 @@ def start(csv_file, components_number, clusters_number):
                    df_kmeans_pca.loc[indicesToKeep, 'pc2'], c=color, s=50)
     ax.legend(targets)
     ax.grid()
-    two_first_components_plot = image.get_base64(plt)
+    two_first_components_plot = get_base64(plt)
 
     # Print the amount of data that holds the components
     explained_variance_ratio = pca.explained_variance_ratio_
@@ -188,10 +181,15 @@ def start(csv_file, components_number, clusters_number):
     plt.yticks([0, 1, 2], pc_colums_names, fontsize=10)
     plt.colorbar()
     plt.xticks(range(len(features)), features, rotation=90, ha='right')
-    components_and_features_plot = image.get_base64(plt, 'tight')
+    components_and_features_plot = get_base64(plt, 'tight')
     plt.clf()
+
+    # Set data for SVM
+    df['cluster'] = kmeans_pca.labels_
+    svm_params = {'df': df, 'x_scaled_reduced': x_scaled_reduced,
+                  'clusters_number': clusters_number}
 
     return (two_first_components_plot.decode('ascii'), components_and_features_plot.decode('ascii'),
             wcss_plot.decode('ascii'), cumulative_explained_variance_ratio_plot.decode(
                 'ascii'), pd.Series(explained_variance_ratio).to_json(orient='values'),
-            pd.Series(kmeans_pca.labels_).to_json(orient='values'), more_important_features)
+            pd.Series(kmeans_pca.labels_).to_json(orient='values'), more_important_features, svm_params)
