@@ -10,6 +10,7 @@ import io
 import json
 import operator
 from kneed import KneeLocator
+from media import image
 
 COLOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y']
 
@@ -86,33 +87,25 @@ def get_pca_more_important_features(df, features, pca, components_number):
     return more_important_features
 
 
-def pca(csv_file, components_number, clusters_number):
-
-    # Read file
+def start(csv_file, components_number, clusters_number):
+    # Read CSV file
     df = pd.read_csv(csv_file)
 
     # Get features from the first row
     features = df.columns.values
 
-    # Remove features
+    # Remove features labels
     x = df.loc[:, features].values
 
     # Standardizing data (mean = 0 , variance = 1)
     x = StandardScaler().fit_transform(x)
 
-    # Cumulative explanined variance ratio plot
+    # Generate cumulative explanined variance ratio plot
     pca = PCA().fit(x)
     plt.plot(np.cumsum(pca.explained_variance_ratio_))
     plt.xlabel('Components number')
     plt.ylabel('Cumulative explained variance')
-    # plt.savefig("cumulative_explained_variance.png", bbox_inches='tight')
-
-    # Create Base 64 string of the plot
-    pic_IObytes = io.BytesIO()
-    plt.savefig(pic_IObytes,  format='png')
-    pic_IObytes.seek(0)
-    cumulative_explained_variance_ratio_plot = base64.b64encode(
-        pic_IObytes.read())
+    cumulative_explained_variance_ratio_plot = image.get_base64(plt)
     plt.clf()
 
     # Create pca
@@ -147,13 +140,8 @@ def pca(csv_file, components_number, clusters_number):
     plt.legend()
     plt.xlabel("Clusters number")
     plt.ylabel("WCSS")
-    # plt.savefig('wcss.png')
-
-    # Create Base 64 string of the plot
-    pic_IObytes = io.BytesIO()
-    plt.savefig(pic_IObytes,  format='png')
-    pic_IObytes.seek(0)
-    wcss_plot = base64.b64encode(pic_IObytes.read())
+    wcss_plot = image.get_base64(plt)
+    plt.clf()
 
     # Run k-means with the number of cluster chosen
     kmeans_pca = KMeans(n_clusters=clusters_number,
@@ -190,13 +178,7 @@ def pca(csv_file, components_number, clusters_number):
                    df_kmeans_pca.loc[indicesToKeep, 'pc2'], c=color, s=50)
     ax.legend(targets)
     ax.grid()
-    # plt.savefig("two_first_componets_plot.png")
-
-    # Create Base 64 string of the plot
-    pic_IObytes = io.BytesIO()
-    plt.savefig(pic_IObytes,  format='png')
-    pic_IObytes.seek(0)
-    two_first_components_plot = base64.b64encode(pic_IObytes.read())
+    two_first_components_plot = image.get_base64(plt)
 
     # Print the amount of data that holds the components
     explained_variance_ratio = pca.explained_variance_ratio_
@@ -206,13 +188,7 @@ def pca(csv_file, components_number, clusters_number):
     plt.yticks([0, 1, 2], pc_colums_names, fontsize=10)
     plt.colorbar()
     plt.xticks(range(len(features)), features, rotation=90, ha='right')
-    # plt.savefig("pca_and_features_participation.png", bbox_inches='tight')
-
-    # Create Base 64 string of the plot
-    pic_IObytes = io.BytesIO()
-    plt.savefig(pic_IObytes,  format='png', bbox_inches='tight')
-    pic_IObytes.seek(0)
-    components_and_features_plot = base64.b64encode(pic_IObytes.read())
+    components_and_features_plot = image.get_base64(plt, 'tight')
     plt.clf()
 
     return (two_first_components_plot.decode('ascii'), components_and_features_plot.decode('ascii'),

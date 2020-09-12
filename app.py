@@ -1,18 +1,16 @@
 from flask import Flask, request, jsonify
-from pca import pca
+from ia import k_means as km
 from io import StringIO
 import os
 import json
 
 app = Flask(__name__)
 
-# Routes
-
 
 @app.route('/pca', methods=['POST'])
 def pca_request():
 
-    two_first_components_plot, components_and_features_plot, wcss_plot, cumulative_explained_variance_ratio_plot,  explained_variance_ratio, cluster_list, more_important_features = pca(
+    two_first_components_plot, components_and_features_plot, wcss_plot, cumulative_explained_variance_ratio_plot,  explained_variance_ratio, cluster_list, more_important_features = km.start(
         request.files.get("csv"), int(request.args.get('components-number')), int(request.args.get('clusters-number')))
 
     return jsonify(
