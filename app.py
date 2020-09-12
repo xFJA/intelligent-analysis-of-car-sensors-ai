@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from pca import pca
+from predict import predict
 from io import StringIO
 import os
 import json
@@ -24,6 +25,12 @@ def pca_request():
         clusterList=cluster_list,
         moreImportantFeatures=json.dumps(more_important_features)
     )
+
+
+@app.route('/predict', methods=['POST'])
+def predict_request():
+    predict(request.files.get("csv"))
+    return jsonify()
 
 
 if __name__ == '__main__':
