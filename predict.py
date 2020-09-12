@@ -45,7 +45,7 @@ def predict(csv_file):
     # TODO: Remove this step
     # Remove Unnamed column
     df = df.drop(labels='Unnamed: 27', axis=1)
-    #df.drop(df.columns[range(1, 27)], axis=1, inplace=True)
+    df.drop(df.columns[range(1, 27)], axis=1, inplace=True)
     # print(df.head())
 
     # Create scaler to normalize features to [0-1]
@@ -109,7 +109,7 @@ def predict(csv_file):
     model.compile(loss='mse', optimizer='adam')
 
     # Train model
-    train_epochs = 500
+    train_epochs = 50
     batch_size = 64
     validation_split = 0.3
 
