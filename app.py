@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from ia import k_means as km, svm
+from ai import k_means as km, svm
 from io import StringIO
 import os
 import json
@@ -16,7 +16,7 @@ def pca_request():
 
     # Apply SVM to the data labelled by k-means
     svm_plot = svm.start(
-        svm_params['df'], svm_params['x_scaled_reduced'], svm_params['clusters_number'])
+        svm_params['df'], svm_params['x_scaled_reduced'], 6)
 
     return jsonify(
         twoFirstComponentsPlot=two_first_components_plot,
@@ -27,6 +27,15 @@ def pca_request():
         clusterList=cluster_list,
         moreImportantFeatures=json.dumps(more_important_features),
         svmPlot=svm_plot
+    )
+
+
+@app.route('/svm', methods=['POST'])
+def svm_classification_request():
+    classification_list = svm.classify_svm(request.files.get("csv"), int(
+        request.args.get('dataset-rows-number')))
+    return jsonify(
+        classificationList=classification_list
     )
 
 
