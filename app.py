@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from ai import k_means as km, svm
+from ai import k_means as km, svm, predict
 from io import StringIO
 import os
 import json
@@ -36,6 +36,19 @@ def svm_classification_request():
         request.args.get('dataset-rows-number')))
     return jsonify(
         classificationList=classification_list
+    )
+
+
+@app.route('/predict', methods=['POST'])
+def predict_request():
+    learning_curve_plot, prediction_plot, rmse, time = predict.predict(
+        request.files.get("csv"), request.args.get('feature'))
+
+    return jsonify(
+        learningCurvePlot=learning_curve_plot,
+        predictionPlot=prediction_plot,
+        rmse=str(rmse),
+        time=str(time)
     )
 
 
