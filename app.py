@@ -42,7 +42,7 @@ def svm_classification_request():
 @app.route('/predict', methods=['POST'])
 def predict_request():
     learning_curve_plot, prediction_plot, rmse, time = predict.predict(
-        request.files.get("csv"), request.args.get('feature'))
+        request.files.get("csv"), request.args.get('feature'), request.args.get('epochs'))
 
     return jsonify(
         learningCurvePlot=learning_curve_plot,

@@ -40,7 +40,7 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     return agg
 
 
-def predict(csv_file, feature):
+def predict(csv_file, feature, epochs):
 
     # Read file
     df = pd.read_csv(csv_file)
@@ -133,7 +133,7 @@ def predict(csv_file, feature):
     model.compile(loss='mse', optimizer='adam')
 
     # Train model
-    train_epochs = 100
+    train_epochs = int(epochs)
     batch_size = 64
     validation_split = 0.3
 
