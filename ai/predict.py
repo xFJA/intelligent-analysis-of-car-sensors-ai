@@ -41,6 +41,21 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
 
     return agg
 
+def generate_prediction_x_labels(time_amount, number_to_start, number):
+    # print('Time amount', time_amount)
+    # print('Number to start', number_to_start)
+    # print('Number', number)
+
+    prediction_x_labels = []
+    current_time = number_to_start * time_amount
+    for i in range(number):
+        prediction_x_labels.append(current_time)
+        current_time += 4
+    
+    return prediction_x_labels
+
+
+
 
 def predict(csv_file, feature, epochs, prediction_features_type, components_number):
 
@@ -189,15 +204,17 @@ def predict(csv_file, feature, epochs, prediction_features_type, components_numb
     inv_y = inv_y[:, -1]
 
     # Plot prediction
-    x_ticks_range = range(len(inv_y))
+    prediction_x_labels= generate_prediction_x_labels(n_15min_interval, X_train.shape[0]+1, len(inv_y))
     print('x ticks range', len(inv_y))
     print(inv_y)
     plt.figure(figsize=(36, 8))
-    plt.plot(x_ticks_range, inv_y, label='actual')
-    plt.plot(x_ticks_range, inv_yhat, label='predicted')
-    plt.xticks(x_ticks_range, rotation='vertical')
+    plt.plot(prediction_x_labels, inv_y, label='actual')
+    plt.plot(prediction_x_labels, inv_yhat, label='predicted')
+    plt.xticks(prediction_x_labels, rotation='vertical')
+    plt.locator_params(axis='x', nbins=30)
     plt.legend()
-    plt.ylabel(feature+' (per 15min)')
+    plt.ylabel(feature)
+    plt.xlabel("Time elapsed (s)")
     #plt.savefig("prediction.png", bbox_inches='tight')
     prediction_plot = get_base64(plt, 'tight')
     plt.clf()
