@@ -13,6 +13,7 @@ import time
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from .common import get_base64
+import copy
 
 
 def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
@@ -40,12 +41,11 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     return agg
 
 
-def predict(csv_file, feature, epochs):
+def predict(csv_file, feature, epochs, prediction_features_type):
 
     # Read file
     df = pd.read_csv(csv_file)
-    print(feature)
-    print(df)
+    print("Original dataframe:\n", df.head())
     predict_column = df[feature]
 
     # TODO: Remove this step
@@ -57,16 +57,27 @@ def predict(csv_file, feature, epochs):
     features = df.columns.values
     x = df.loc[:, features].values
 
-    # Apply PCA
-    # TODO: change labels for more components using function
-    PCA_model = PCA(n_components=3)
+    if prediction_features_type == "PCA":
+        # Apply PCA
+        # TODO: change labels for more components using function
+        PCA_model = PCA(n_components=3)
 
-    principal_components = PCA_model.fit_transform(x)
-    principalDf = pd.DataFrame(
-        data=principal_components, columns=['pc1', 'pc2', 'pc3'])
-    principalDf['predict'] = pd.Series(predict_column)
-    print(principalDf)
-    df = principalDf
+        principal_components = PCA_model.fit_transform(x)
+        principalDf = pd.DataFrame(
+            data=principal_components, columns=['pc1', 'pc2', 'pc3'])
+        principalDf['predict'] = pd.Series(predict_column)
+        print(principalDf)
+        df = principalDf
+    elif prediction_features_type == "AllFeatures":
+        num_columns = len(df.columns)
+        last_column = copy.deepcopy(df.iloc[:, num_columns-1])
+        df.iloc[:, num_columns - 1] = df[feature]
+        df[feature] = last_column
+    elif prediction_features_type == "OneFeature":
+        df.drop(df.columns.difference([feature]), 1, inplace=True)
+        
+
+    print("Dataset after prediction features type analysis:\n", df.head())
 
     # Create scaler to normalize features to [0-1]
     scaler = MinMaxScaler(feature_range=(0, 1))
@@ -77,8 +88,7 @@ def predict(csv_file, feature, epochs):
     print(df)
     # Set duration to predict
     n_15min_interval = 4
-    #n_features = df.shape[1]
-    n_features = 4
+    n_features = df.shape[1]
     print('n_features: ', n_features)
 
     # Construct input records capturing more than 1 hour of input time steps
@@ -165,7 +175,7 @@ def predict(csv_file, feature, epochs):
     print("RMSE:", rmse)
 
     # Rescale predictions
-    inv_yhat = np.concatenate((X_test[:, -(n_features-1):],yhat), axis=1)
+    inv_yhat = np.concatenate((X_test[:, -(n_features-1):], yhat), axis=1)
     print(inv_yhat.shape)
     inv_yhat = scaler.inverse_transform(inv_yhat)
     inv_yhat = inv_yhat[:, -1]
