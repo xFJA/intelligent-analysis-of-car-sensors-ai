@@ -93,6 +93,7 @@ def start(df, x_scaled_reduced, clusters_number):
                :, 1], s=40, facecolors='none', edgecolors='navy', label='Support vectors')
 
     plot_contours(ax, classify, xx, yy, cmap='seismic', alpha=0.4)
+    plt.rc('axes', labelsize=16) # Only needed first time
     plt.legend(fontsize=15)
 
     plt.xlabel('pc1')

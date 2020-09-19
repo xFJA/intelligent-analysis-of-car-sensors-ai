@@ -15,6 +15,7 @@ from .common import generate_cluster_labels, get_base64, COLOR_LIST, generate_pc
 
 COLOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y']
 
+
 def generate_cluster_map(number):
     res = {}
 
@@ -83,7 +84,9 @@ def start(csv_file, components_number, clusters_number):
     x = StandardScaler().fit_transform(x)
 
     # Generate cumulative explanined variance ratio plot
+    plt.rc('axes', labelsize=16) # Only needed first time
     pca = PCA().fit(x)
+    plt.figure(figsize=(10, 10))
     plt.plot(np.cumsum(pca.explained_variance_ratio_))
     plt.xlabel('Components number')
     plt.ylabel('Cumulative explained variance')
@@ -170,6 +173,8 @@ def start(csv_file, components_number, clusters_number):
     plt.matshow(pca.components_, cmap='Blues')
     plt.yticks([0, 1, 2], pc_colums_names, fontsize=10)
     plt.colorbar()
+    plt.xlabel('Features')
+    plt.ylabel('Principal components')
     plt.xticks(range(len(features)), features, rotation=90, ha='right')
     components_and_features_plot = get_base64(plt, 'tight')
     plt.clf()

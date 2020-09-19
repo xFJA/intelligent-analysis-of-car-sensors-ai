@@ -154,6 +154,7 @@ def predict(csv_file, feature, epochs, prediction_features_type, components_numb
     print('Training time: ', (end-start))
 
     # Plot learning curve
+    plt.rc('axes', labelsize=16) # Only needed first time
     plt.figure(figsize=(36, 8))
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
