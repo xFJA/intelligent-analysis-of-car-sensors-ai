@@ -11,19 +11,9 @@ import json
 import operator
 from kneed import KneeLocator
 # pylint: disable=relative-beyond-top-level
-from .common import generate_cluster_labels, get_base64, COLOR_LIST
+from .common import generate_cluster_labels, get_base64, COLOR_LIST, generate_pc_columns_names
 
 COLOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y']
-
-
-def generate_pc_columns_names(number):
-    res = []
-
-    for i in range(number):
-        res.append("pc"+str(i+1))
-
-    return res
-
 
 def generate_cluster_map(number):
     res = {}

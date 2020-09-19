@@ -3,6 +3,14 @@ import io
 
 COLOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y']
 
+def generate_pc_columns_names(number):
+    res = []
+
+    for i in range(number):
+        res.append("pc"+str(i+1))
+
+    return res
+
 def generate_cluster_labels(number):
     res = []
 

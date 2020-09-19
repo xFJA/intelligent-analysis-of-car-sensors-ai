@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from .common import get_base64
 import copy
+from .common import generate_pc_columns_names
 
 
 def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
@@ -41,7 +42,7 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     return agg
 
 
-def predict(csv_file, feature, epochs, prediction_features_type):
+def predict(csv_file, feature, epochs, prediction_features_type, components_number):
 
     # Read file
     df = pd.read_csv(csv_file)
@@ -60,11 +61,11 @@ def predict(csv_file, feature, epochs, prediction_features_type):
     if prediction_features_type == "PCA":
         # Apply PCA
         # TODO: change labels for more components using function
-        PCA_model = PCA(n_components=3)
+        PCA_model = PCA(n_components=components_number)
 
         principal_components = PCA_model.fit_transform(x)
         principalDf = pd.DataFrame(
-            data=principal_components, columns=['pc1', 'pc2', 'pc3'])
+            data=principal_components, columns=generate_pc_columns_names(components_number))
         principalDf['predict'] = pd.Series(predict_column)
         print(principalDf)
         df = principalDf
@@ -75,7 +76,6 @@ def predict(csv_file, feature, epochs, prediction_features_type):
         df[feature] = last_column
     elif prediction_features_type == "OneFeature":
         df.drop(df.columns.difference([feature]), 1, inplace=True)
-        
 
     print("Dataset after prediction features type analysis:\n", df.head())
 
