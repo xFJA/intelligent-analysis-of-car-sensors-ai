@@ -75,7 +75,7 @@ def start(df, x_scaled_reduced, clusters_number):
     x0, x1 = x_test_scaled_reduced[:, 0], x_test_scaled_reduced[:, 1]
     xx, yy = make_meshgrid(x0, x1)
 
-    fig, ax = plt.subplots(figsize=(12, 9))
+    fig, ax = plt.subplots(figsize=(10, 10))
     fig.patch.set_facecolor('white')
     cdictl = generate_svm_color_map(clusters_number)
 

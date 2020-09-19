@@ -154,6 +154,7 @@ def predict(csv_file, feature, epochs, prediction_features_type, components_numb
     print('Training time: ', (end-start))
 
     # Plot learning curve
+    plt.figure(figsize=(36, 8))
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
     plt.title('model loss')
@@ -190,7 +191,7 @@ def predict(csv_file, feature, epochs, prediction_features_type, components_numb
     x_ticks_range = range(len(inv_y))
     print('x ticks range', len(inv_y))
     print(inv_y)
-    plt.figure(figsize=(36, 7))
+    plt.figure(figsize=(36, 8))
     plt.plot(x_ticks_range, inv_y, label='actual')
     plt.plot(x_ticks_range, inv_yhat, label='predicted')
     plt.xticks(x_ticks_range, rotation='vertical')
