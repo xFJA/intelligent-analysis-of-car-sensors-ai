@@ -56,10 +56,8 @@ def predict(csv_file, feature, epochs):
     # Get features from the first row
     features = df.columns.values
     x = df.loc[:, features].values
-    # 1. Normalize the data
-    df = StandardScaler().fit_transform(x)
 
-    # 2. Use PCA
+    # Apply PCA
     # TODO: change labels for more components using function
     PCA_model = PCA(n_components=3)
 
@@ -167,16 +165,16 @@ def predict(csv_file, feature, epochs):
     print("RMSE:", rmse)
 
     # Rescale predictions
-    inv_yhat = np.concatenate((yhat, X_test[:, -(n_features-1):]), axis=1)
+    inv_yhat = np.concatenate((X_test[:, -(n_features-1):],yhat), axis=1)
     print(inv_yhat.shape)
     inv_yhat = scaler.inverse_transform(inv_yhat)
-    inv_yhat = inv_yhat[:, 0]
+    inv_yhat = inv_yhat[:, -1]
 
     # Rescale test data (y_test)
     y_test = y_test.reshape((len(y_test), 1))
-    inv_y = np.concatenate((y_test, X_test[:, -(n_features-1):]), axis=1)
+    inv_y = np.concatenate((X_test[:, -(n_features-1):], y_test), axis=1)
     inv_y = scaler.inverse_transform(inv_y)
-    inv_y = inv_y[:, 0]
+    inv_y = inv_y[:, -1]
 
     # Plot prediction
     x_ticks_range = range(len(inv_y))
